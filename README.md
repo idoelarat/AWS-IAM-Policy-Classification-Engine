@@ -36,8 +36,6 @@ The system operates as an iterative feedback loop where the AI acts as a securit
 * **Language:** Python
 * **AI Model:** `gemini-2.5-flash-lite`
     * *Why?* It is fast, free(for me), and highly reliable at generating structured JSON.
-* **Framework:** Custom Iterative Loop
-    * *Why?* I avoided heavy frameworks like LangGraph to keep the logic lightweight and easy to debug.
 
 ---
 
