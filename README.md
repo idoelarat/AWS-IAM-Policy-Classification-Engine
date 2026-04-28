@@ -70,3 +70,42 @@ If the Analyzer flags a policy as "Weak," this component rewrites the policy to 
 ### Design Decisions
 * **Separation of Concerns:** By splitting the **Analyzer** and **Fixer**, the AI focuses on one task at a time, significantly reducing "hallucinations."
 * **Reliability:** I rejected the idea of the AI validating itself. Using a hard-coded Python check ensures that the output is always valid JSON, regardless of AI variance.
+
+![System Architecture](graph.png)
+
+
+---
+
+## 🚀 Getting Started
+### Installation
+
+1. **Clone the repository:**
+   ```bash
+   git clone [https://github.com/idoelarat/AWS-IAM-Policy-Classification-Engine.git](https://github.com/idoelarat/AWS-IAM-Policy-Classification-Engine.git)
+   cd AWS-IAM-Policy-Classification-Engine
+   ```
+2. **Create a virtual environment Linux / Windows:**
+   ```bash
+   python -m venv venv
+   source venv/bin/activate  # On Windows use: venv\Scripts\activate
+   ```
+3. **Install dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+### Configuration
+   The application requires an API key to communicate with your gemini ai agent.
+   ```bash
+   touch .env
+   ```
+   Open the .env file and add your OpenAI credentials:
+   ```Code Snippet
+   API_KEY=your_api_key_here
+   ```
+
+### Running The App
+   ```bash
+   python main.py
+   ```
+
+---
