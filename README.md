@@ -69,7 +69,7 @@ If the Analyzer flags a policy as "Weak," this component rewrites the policy to 
 * **Separation of Concerns:** By splitting the **Analyzer** and **Fixer**, the AI focuses on one task at a time, significantly reducing "hallucinations."
 * **Reliability:** I rejected the idea of the AI validating itself. Using a hard-coded Python check ensures that the output is always valid JSON, regardless of AI variance.
 
-![System Architecture](graph.png)
+![System Architecture](/assets/graph.png)
 
 
 ---
