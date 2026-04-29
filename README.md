@@ -79,7 +79,7 @@ If the Analyzer flags a policy as "Weak," this component rewrites the policy to 
 
 1. **Clone the repository:**
    ```bash
-   git clone [https://github.com/idoelarat/AWS-IAM-Policy-Classification-Engine.git](https://github.com/idoelarat/AWS-IAM-Policy-Classification-Engine.git)
+   git clone https://github.com/idoelarat/AWS-IAM-Policy-Classification-Engine.git
    cd AWS-IAM-Policy-Classification-Engine
    ```
 2. **Create a virtual environment Linux / Windows:**
