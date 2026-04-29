@@ -1,0 +1,176 @@
+[
+    {
+        "original_policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": "*",
+                    "Resource": "*"
+                }
+            ]
+        },
+        "analysis": {
+            "classification": "WEAK",
+            "reason": "The policy includes wildcards (*) for both Actions and Resources, with a broad 'Allow' effect, granting excessive permissions that do not adhere to the principle of least privilege."
+        },
+        "remediation": {
+            "fixed_policy": {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Action": [
+                            "s3:ListBucket",
+                            "s3:GetObject"
+                        ],
+                        "Resource": [
+                            "arn:aws:s3:::example-bucket",
+                            "arn:aws:s3:::example-bucket/*"
+                        ]
+                    }
+                ]
+            },
+            "explanation": "The original policy was overly permissive, allowing any action on any resource. This violates the principle of least privilege and poses significant security risks. The fixed policy grants only the necessary permissions to list objects in a specific S3 bucket and to get objects within that bucket. This approach minimizes permissions to what is strictly required, protecting resources from unauthorized access."
+        },
+        "metadata": {
+            "filename": "critical_admin.json",
+            "processing_time_sec": 3.65
+        }
+    },
+    {
+        "original_policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": "ec2:DescribeInstances",
+                    "Resource": "*"
+                }
+            ]
+        },
+        "analysis": {
+            "classification": "WEAK",
+            "reason": "The policy uses a wildcard '*' for the Resource in the ec2:DescribeInstances action, which represents a broad 'Allow' effect. It's advisable to specify more granular Resource ARNs to follow the principle of Least Privilege."
+        },
+        "remediation": {
+            "fixed_policy": {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Action": "ec2:DescribeInstances",
+                        "Resource": "arn:aws:ec2:region:account-id:instance/instance-id"
+                    }
+                ]
+            },
+            "explanation": "The original policy allowed the 'ec2:DescribeInstances' action on all EC2 instances by specifying a wildcard '*' for the Resource field. To adhere to the principle of Least Privilege, the policy should specify more granular Resource ARNs. Replace 'region', 'account-id', and 'instance-id' with actual values to restrict access to specific instances."
+        },
+        "metadata": {
+            "filename": "ec2_describe_metadata.json",
+            "processing_time_sec": 3.68
+        }
+    },
+    {
+        "original_policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": "iam:CreatePolicyVersion",
+                    "Resource": "*"
+                }
+            ]
+        },
+        "analysis": {
+            "classification": "WEAK",
+            "reason": "The policy uses a wildcard (*) for Resources, allowing unrestricted creation of IAM policy versions, which is sensitive. It does not follow the principle of least privilege."
+        },
+        "remediation": {
+            "fixed_policy": {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Action": "iam:CreatePolicyVersion",
+                        "Resource": "arn:aws:iam::123456789012:policy/ExamplePolicyName"
+                    }
+                ]
+            },
+            "explanation": "The policy was too permissive by allowing 'iam:CreatePolicyVersion' on any resource using a wildcard '*'. The policy has been fixed to apply to a specific policy ARN, adhering to the principle of least privilege by limiting IAM policy changes to only the specified resource. Replace '123456789012' and 'ExamplePolicyName' with the correct account ID and policy name, respectively."
+        },
+        "metadata": {
+            "filename": "privilege_escalation.json",
+            "processing_time_sec": 3.48
+        }
+    },
+    {
+        "original_policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": [
+                        "s3:GetObject",
+                        "s3:PutObject",
+                        "s3:DeleteObject"
+                    ],
+                    "Resource": "*"
+                }
+            ]
+        },
+        "analysis": {
+            "classification": "WEAK",
+            "reason": "The policy uses a wildcard (*) for Resources in actions related to S3, which should be scoped down to specific resource ARNs for Least Privilege."
+        },
+        "remediation": {
+            "fixed_policy": {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Action": [
+                            "s3:GetObject",
+                            "s3:PutObject",
+                            "s3:DeleteObject"
+                        ],
+                        "Resource": [
+                            "arn:aws:s3:::example-bucket/*"
+                        ]
+                    }
+                ]
+            },
+            "explanation": "The wildcard '*' for Resources in the policy was replaced with a specific Amazon Resource Name (ARN) for an S3 bucket to implement the principle of Least Privilege. This limits access to only the specified bucket rather than all S3 resources. The ARN 'arn:aws:s3:::example-bucket/*' should be replaced with the actual bucket name and path applicable to the use case."
+        },
+        "metadata": {
+            "filename": "s3_wildcard_data.json",
+            "processing_time_sec": 3.5
+        }
+    },
+    {
+        "original_policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": [
+                        "s3:Get*",
+                        "s3:List*"
+                    ],
+                    "Resource": [
+                        "arn:aws:s3:::production-logs",
+                        "arn:aws:s3:::production-logs/*"
+                    ]
+                }
+            ]
+        },
+        "analysis": {
+            "classification": "STRONG",
+            "reason": "The policy specifies precise Actions related to listing and getting objects from a specific S3 bucket, using specific Resource ARNs, aligning with the principle of Least Privilege."
+        },
+        "metadata": {
+            "filename": "strong_readonly_s3.json",
+            "processing_time_sec": 1.02
+        }
+    }
+]
