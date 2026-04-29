@@ -34,8 +34,8 @@ The system operates as an iterative feedback loop where the AI acts as a securit
 
 ### The Tech Stack
 * **Language:** Python
-* **AI Model:** `gemini-2.5-flash-lite`
-    * *Why?* It is fast, free(for me), and highly reliable at generating structured JSON.
+* **AI Model:** `gpt-4o`
+    * *Why?* It is fast, Had Spare Tokens ;) , and highly reliable at generating structured JSON.
 
 ---
 
@@ -92,7 +92,7 @@ If the Analyzer flags a policy as "Weak," this component rewrites the policy to 
    pip install -r requirements.txt
    ```
 ### Configuration
-   The application requires an API key to communicate with your gemini ai agent.
+   The application requires an API key to communicate with your ai agent.
    ```bash
    touch .env
    ```
