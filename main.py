@@ -67,12 +67,32 @@ def run_system(input_policy: dict):
 
     if analysis.get("classification") == "WEAK":
         print(f"[!] Verdict: WEAK. Reason: {analysis.get('reason')}")
-        remediation = agent.remediate_policy(input_policy, analysis.get("reason", ""))
-        if validate_json(remediation.get("fixed_policy")):
-            result["remediation"] = remediation
-            print("[+] Remediation complete and validated.")
+
+        max_retries = 3
+        attempt = 0
+        while attempt < max_retries:
+            remediation = agent.remediate_policy(
+                input_policy, analysis.get("reason", "")
+            )
+
+            if validate_json(remediation.get("fixed_policy")):
+                result["remediation"] = remediation
+                print(
+                    f"[+] Remediation complete and validated (Attempt {attempt + 1})."
+                )
+                break
+            else:
+                attempt += 1
+                print(f"[?] Invalid JSON format, retrying... ({attempt}/{max_retries})")
+
+        if attempt == max_retries:
+            print(
+                "[X] Failed to generate a valid JSON remediation after multiple attempts."
+            )
+
     else:
         print("[+] Verdict: STRONG. No changes required.")
+
     return result
 
 
