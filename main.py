@@ -10,16 +10,27 @@ client = OpenAI(api_key=os.getenv("Api_key"))
 
 MODEL_ID = "gpt-4o"
 
-CLASSIFICATION_CRITERIA = """
-Analyze the AWS IAM policy based on these Senior Security Engineer criteria:
-- WEAK: Wildcards (*) in sensitive Actions/Resources, iam:PassRole without restrictions, or broad 'Allow' effects.
-- STRONG: Specific Actions (e.g., s3:GetObject) and specific Resource ARNs (Least Privilege).
-"""
+CLASSIFICATION_CRITERIA = {
+    "AWS": "Analyze AWS IAM: WEAK if has Action: '*', Resource: '*', or iam:PassRole without constraints.",
+    "GCP": "Analyze GCP IAM: WEAK if using Primitive Roles (Owner, Editor) instead of Predefined/Custom roles, or broad member access (allUsers).",
+    "AZURE": "Analyze Azure RBAC: WEAK if 'assignableScopes' is '/' (root) with high-privilege actions or wildcard '*' in actions.",
+}
+
+
+def detect_cloud_provider(policy_json: dict) -> str:
+    policy_str = json.dumps(policy_json)
+    if "Statement" in policy_json or "Version" in policy_json:
+        return "AWS"
+    if "bindings" in policy_json or "role" in policy_str:
+        return "GCP"
+    if "assignableScopes" in policy_json or "properties" in policy_json:
+        return "AZURE"
+    return "AWS"
 
 
 class IAMAgenticSystem:
     def __init__(self):
-        self.criteria = CLASSIFICATION_CRITERIA
+        self.criteria_map = CLASSIFICATION_CRITERIA
 
     def _call_llm(self, system_prompt: str, user_prompt: str) -> str:
         try:
@@ -37,13 +48,24 @@ class IAMAgenticSystem:
             raise e
 
     def analyze_policy(self, policy_json: dict):
-        system_msg = f"{self.criteria}\nReturn ONLY a JSON with 'classification' (WEAK/STRONG) and 'reason'."
+        provider = detect_cloud_provider(policy_json)
+        criteria = self.criteria_map.get(provider)
+
+        system_msg = (
+            f"You are a Senior Cloud Security Researcher. Target Provider: {provider}.\n"
+            f"Criteria: {criteria}\n"
+            "Return ONLY a JSON with 'classification' (WEAK/STRONG), 'provider', and 'reason'."
+        )
         user_msg = f"Policy: {json.dumps(policy_json)}"
         content = self._call_llm(system_msg, user_msg)
         return json.loads(content)
 
     def remediate_policy(self, policy_json: dict, reason: str):
-        system_msg = "You are a Senior Cloud Security Engineer. Fix the WEAK policy. Return ONLY JSON with 'fixed_policy' and 'explanation'."
+        provider = detect_cloud_provider(policy_json)
+        system_msg = (
+            f"You are a Senior {provider} Security Engineer. Fix the WEAK policy to follow Least Privilege. "
+            "Return ONLY JSON with 'fixed_policy' and 'explanation'."
+        )
         user_msg = f"Reason: {reason}\nOriginal Policy: {json.dumps(policy_json)}"
         content = self._call_llm(system_msg, user_msg)
         return json.loads(content)

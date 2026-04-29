@@ -5,158 +5,151 @@
             "Statement": [
                 {
                     "Effect": "Allow",
-                    "Action": "*",
-                    "Resource": "*"
-                }
-            ]
-        },
-        "analysis": {
-            "classification": "WEAK",
-            "reason": "The policy uses wildcards (*) for both Actions and Resources which allows all actions on all resources, leading to over-privileged access and violating the principle of Least Privilege."
-        },
-        "remediation": {
-            "fixed_policy": {
-                "Version": "2012-10-17",
-                "Statement": [
-                    {
-                        "Effect": "Allow",
-                        "Action": [
-                            "specific:Action1",
-                            "specific:Action2"
-                        ],
-                        "Resource": [
-                            "arn:aws:specific-service:region:account-id:resource-type/resource-id"
-                        ]
-                    }
-                ]
-            },
-            "explanation": "The fixed policy replaces the use of wildcards with specific actions and resources, adhering to the principle of Least Privilege. By doing so, it grants only necessary permissions to the required resources, minimizing the risk of over-privileged access."
-        },
-        "metadata": {
-            "filename": "critical_admin.json",
-            "processing_time_sec": 5.45
-        }
-    },
-    {
-        "original_policy": {
-            "Version": "2012-10-17",
-            "Statement": [
-                {
-                    "Effect": "Allow",
-                    "Action": "ec2:DescribeInstances",
-                    "Resource": "*"
-                }
-            ]
-        },
-        "analysis": {
-            "classification": "STRONG",
-            "reason": "The policy uses a specific action 'ec2:DescribeInstances' which is not sensitive, and even though the resource is '*', the action itself is considered read-only and not risky. It's aligned with least privilege for the specific action."
-        },
-        "metadata": {
-            "filename": "ec2_describe_metadata.json",
-            "processing_time_sec": 1.98
-        }
-    },
-    {
-        "original_policy": {
-            "Version": "2012-10-17",
-            "Statement": [
-                {
-                    "Effect": "Allow",
-                    "Action": "iam:CreatePolicyVersion",
-                    "Resource": "*"
-                }
-            ]
-        },
-        "analysis": {
-            "classification": "WEAK",
-            "reason": "The policy uses a wildcard '*' in the Resource field for the iam:CreatePolicyVersion action, which is sensitive and should be restricted to specific resources to adhere to the principle of least privilege."
-        },
-        "remediation": {
-            "fixed_policy": {
-                "Version": "2012-10-17",
-                "Statement": [
-                    {
-                        "Effect": "Allow",
-                        "Action": "iam:CreatePolicyVersion",
-                        "Resource": "arn:aws:iam::123456789012:policy/SpecificPolicyName"
-                    }
-                ]
-            },
-            "explanation": "To adhere to the principle of least privilege, the policy has been adjusted to restrict the 'iam:CreatePolicyVersion' action to a specific IAM policy resource. Replace '123456789012' with the actual AWS account ID and 'SpecificPolicyName' with the actual policy name that should be targeted by this action. This prevents unauthorized users from creating new versions of any policy within the account, thus minimizing security risks."
-        },
-        "metadata": {
-            "filename": "privilege_escalation.json",
-            "processing_time_sec": 4.43
-        }
-    },
-    {
-        "original_policy": {
-            "Version": "2012-10-17",
-            "Statement": [
-                {
-                    "Effect": "Allow",
                     "Action": [
                         "s3:GetObject",
-                        "s3:PutObject",
-                        "s3:DeleteObject"
-                    ],
-                    "Resource": "*"
-                }
-            ]
-        },
-        "analysis": {
-            "classification": "WEAK",
-            "reason": "The policy uses a wildcard (*) in the Resource field, which permits access to all S3 buckets. This does not adhere to the principle of least privilege."
-        },
-        "remediation": {
-            "fixed_policy": {
-                "Version": "2012-10-17",
-                "Statement": [
-                    {
-                        "Effect": "Allow",
-                        "Action": [
-                            "s3:GetObject",
-                            "s3:PutObject",
-                            "s3:DeleteObject"
-                        ],
-                        "Resource": [
-                            "arn:aws:s3:::example-bucket/*"
-                        ]
-                    }
-                ]
-            },
-            "explanation": "The policy was fixed by replacing the wildcard '*' in the Resource field with a specific Amazon Resource Name (ARN) of the S3 bucket and its objects. This change ensures that access is limited to only the specified S3 bucket ('example-bucket') and its contents, in accordance with the principle of least privilege. Be sure to replace 'example-bucket' with the actual name of your S3 bucket."
-        },
-        "metadata": {
-            "filename": "s3_wildcard_data.json",
-            "processing_time_sec": 4.28
-        }
-    },
-    {
-        "original_policy": {
-            "Version": "2012-10-17",
-            "Statement": [
-                {
-                    "Effect": "Allow",
-                    "Action": [
-                        "s3:Get*",
-                        "s3:List*"
+                        "s3:ListBucket"
                     ],
                     "Resource": [
-                        "arn:aws:s3:::production-logs",
-                        "arn:aws:s3:::production-logs/*"
+                        "arn:aws:s3:::production-data-shared",
+                        "arn:aws:s3:::production-data-shared/*"
                     ]
                 }
             ]
         },
         "analysis": {
             "classification": "STRONG",
-            "reason": "The policy uses specific actions (s3:Get* and s3:List*) and restricts access to specific S3 buckets and their contents, adhering to the principle of least privilege by not using wildcards in a sensitive manner."
+            "provider": "AWS",
+            "reason": "The policy specifies exact actions and resources without using wildcards or unrestricted actions, indicating good security practice."
         },
         "metadata": {
-            "filename": "strong_readonly_s3.json",
-            "processing_time_sec": 1.43
+            "filename": "aws_strong_readonly.json.json",
+            "processing_time_sec": 2.33
+        }
+    },
+    {
+        "original_policy": {
+            "Version": "2012-10-17",
+            "Statement": [
+                {
+                    "Effect": "Allow",
+                    "Action": "s3:*",
+                    "Resource": "*"
+                }
+            ]
+        },
+        "analysis": {
+            "classification": "WEAK",
+            "provider": "AWS",
+            "reason": "The policy allows all actions ('*') on all S3 resources ('*'), which indicates excessive permissions."
+        },
+        "remediation": {
+            "fixed_policy": {
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Effect": "Allow",
+                        "Action": [
+                            "s3:PutObject",
+                            "s3:GetObject",
+                            "s3:ListBucket"
+                        ],
+                        "Resource": [
+                            "arn:aws:s3:::example-bucket",
+                            "arn:aws:s3:::example-bucket/*"
+                        ]
+                    }
+                ]
+            },
+            "explanation": "The fixed policy follows the principle of least privilege by specifying only the necessary actions: 's3:PutObject' for uploading, 's3:GetObject' for downloading, and 's3:ListBucket' for listing the objects in the bucket. The resources are restricted to a specific bucket, 'example-bucket', rather than allowing access to all S3 resources."
+        },
+        "metadata": {
+            "filename": "aws_weak_s3.json",
+            "processing_time_sec": 3.96
+        }
+    },
+    {
+        "original_policy": {
+            "properties": {
+                "roleName": "Custom Wildcard Admin",
+                "description": "Too much power",
+                "assignableScopes": [
+                    "/"
+                ],
+                "permissions": [
+                    {
+                        "actions": [
+                            "*"
+                        ],
+                        "notActions": [],
+                        "dataActions": [],
+                        "notDataActions": []
+                    }
+                ]
+            }
+        },
+        "analysis": {
+            "classification": "STRONG",
+            "provider": "GCP",
+            "reason": "The use of custom roles indicates a tailored permission model. However, the presence of wildcard permissions can be concerning, but since it does not specify the use of Primitive Roles or broad member access like 'allUsers', the configuration is classified as STRONG."
+        },
+        "metadata": {
+            "filename": "azure_weak_rbac.json",
+            "processing_time_sec": 2.29
+        }
+    },
+    {
+        "original_policy": {
+            "bindings": [
+                {
+                    "role": "roles/storage.objectViewer",
+                    "members": [
+                        "serviceAccount:my-app-sa@project-id.iam.gserviceaccount.com"
+                    ]
+                }
+            ]
+        },
+        "analysis": {
+            "classification": "STRONG",
+            "provider": "GCP",
+            "reason": "The policy uses a predefined role (roles/storage.objectViewer) granted to a specific service account, avoiding the use of primitive roles or broad access such as allUsers."
+        },
+        "metadata": {
+            "filename": "gcp_strong_storage.json",
+            "processing_time_sec": 1.14
+        }
+    },
+    {
+        "original_policy": {
+            "bindings": [
+                {
+                    "role": "roles/owner",
+                    "members": [
+                        "user:temp-contractor@company.com"
+                    ]
+                }
+            ]
+        },
+        "analysis": {
+            "classification": "WEAK",
+            "provider": "GCP",
+            "reason": "Using a primitive role (Owner) instead of predefined or custom roles."
+        },
+        "remediation": {
+            "fixed_policy": {
+                "bindings": [
+                    {
+                        "role": "roles/viewer",
+                        "members": [
+                            "user:temp-contractor@company.com"
+                        ]
+                    }
+                ],
+                "explanation": "The temp-contractor only needs read-only access, which is why we have replaced the 'owner' role with the 'viewer' role. This follows the principle of least privilege, ensuring the user has only the necessary permissions to perform their job without the excessive permissions granted by the 'owner' role."
+            }
+        },
+        "metadata": {
+            "filename": "gcp_weak_owner.json",
+            "processing_time_sec": 3.83
         }
     }
 ]

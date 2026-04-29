@@ -1,0 +1,10 @@
+{
+    "bindings": [
+        {
+            "role": "roles/owner",
+            "members": [
+                "user:temp-contractor@company.com"
+            ]
+        }
+    ]
+}

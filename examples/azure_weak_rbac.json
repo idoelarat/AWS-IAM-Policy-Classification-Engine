@@ -1,0 +1,19 @@
+{
+    "properties": {
+        "roleName": "Custom Wildcard Admin",
+        "description": "Too much power",
+        "assignableScopes": [
+            "/"
+        ],
+        "permissions": [
+            {
+                "actions": [
+                    "*"
+                ],
+                "notActions": [],
+                "dataActions": [],
+                "notDataActions": []
+            }
+        ]
+    }
+}

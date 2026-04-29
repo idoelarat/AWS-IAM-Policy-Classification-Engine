@@ -1,0 +1,10 @@
+{
+    "bindings": [
+        {
+            "role": "roles/storage.objectViewer",
+            "members": [
+                "serviceAccount:my-app-sa@project-id.iam.gserviceaccount.com"
+            ]
+        }
+    ]
+}
