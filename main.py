@@ -11,21 +11,31 @@ client = OpenAI(api_key=os.getenv("Api_key"))
 MODEL_ID = "gpt-4o"
 
 CLASSIFICATION_CRITERIA = {
-    "AWS": "Analyze AWS IAM: WEAK if has Action: '*', Resource: '*', or iam:PassRole without constraints.",
-    "GCP": "Analyze GCP IAM: WEAK if using Primitive Roles (Owner, Editor) instead of Predefined/Custom roles, or broad member access (allUsers).",
-    "AZURE": "Analyze Azure RBAC: WEAK if 'assignableScopes' is '/' (root) with high-privilege actions or wildcard '*' in actions.",
+    "AWS": """
+        Evaluate based on AWS Security Best Practices:
+        1. Privilege Escalation: Check for dangerous combinations like iam:CreateAccessKey, iam:PassRole (without conditions), or iam:AttachUserPolicy.
+        2. Resource Exposure: Identify '*' in Resources especially for sensitive services (S3, SecretsManager, KMS).
+        3. Excessive Actions: Identify 'Action: *' or broad wildcards like 's3:*' instead of specific API calls (e.g., s3:GetObject).
+        4. Lack of Conditions: Check if 'Condition' blocks are missing for critical actions.
+        Verdict WEAK if any of these violate the Principle of Least Privilege (PoLP).
+    """,
+    "GCP": """
+        Evaluate based on GCP IAM Governance:
+        1. Primitive Roles: Check for 'roles/owner', 'roles/editor', or 'roles/viewer' (highly discouraged).
+        2. Broad Identity Access: Check for 'allUsers' or 'allAuthenticatedUsers' in bindings.
+        3. Predefined vs Custom: Prefer Custom Roles or narrow Predefined roles over broad ones.
+        4. Resource Manager Access: Look for broad bindings at the Project, Folder, or Organization level.
+        Verdict WEAK if the policy increases the blast radius beyond the specific job function.
+    """,
+    "AZURE": """
+        Evaluate based on Azure RBAC Best Practices:
+        1. Root Scope Assignment: Check if 'assignableScopes' includes '/' or Subscription root with high-privilege roles.
+        2. Built-in Over-privilege: Identify use of 'Owner' or 'Contributor' where a specific RBAC role was possible.
+        3. Wildcard Actions: Check for '*' in 'actions' or 'notActions'.
+        4. Data Plane Exposure: Analyze if 'dataActions' grant unrestricted access to storage or key vaults.
+        Verdict WEAK if the assignment allows lateral movement or lacks granular scope.
+    """,
 }
-
-
-def detect_cloud_provider(policy_json: dict) -> str:
-    policy_str = json.dumps(policy_json)
-    if "Statement" in policy_json or "Version" in policy_json:
-        return "AWS"
-    if "bindings" in policy_json or "role" in policy_str:
-        return "GCP"
-    if "assignableScopes" in policy_json or "properties" in policy_json:
-        return "AZURE"
-    return "AWS"
 
 
 class IAMAgenticSystem:
@@ -47,8 +57,25 @@ class IAMAgenticSystem:
             print(f"[!] OpenAI Error: {e}")
             raise e
 
+    def detect_cloud_provider_llm(self, policy_json: dict) -> str:
+        system_msg = (
+            "You are a Cloud Security Architect. Your task is to identify the cloud provider "
+            "of a given IAM policy JSON. Respond ONLY with a JSON object containing the key 'provider' "
+            "and the value which must be one of: 'AWS', 'GCP', or 'AZURE'."
+        )
+        user_msg = f"Analyze this policy and tell me which cloud provider it belongs to: {json.dumps(policy_json)}"
+
+        try:
+            content = self._call_llm(system_msg, user_msg)
+            res = json.loads(content)
+            provider = res.get("provider", "AWS").upper()
+            return provider
+        except Exception as e:
+            print(f"[!] Detection Error: {e}")
+            return "AWS"
+
     def analyze_policy(self, policy_json: dict):
-        provider = detect_cloud_provider(policy_json)
+        provider = self.detect_cloud_provider_llm(policy_json)
         criteria = self.criteria_map.get(provider)
 
         system_msg = (
@@ -61,7 +88,7 @@ class IAMAgenticSystem:
         return json.loads(content)
 
     def remediate_policy(self, policy_json: dict, reason: str):
-        provider = detect_cloud_provider(policy_json)
+        provider = self.detect_cloud_provider_llm(policy_json)
         system_msg = (
             f"You are a Senior {provider} Security Engineer. Fix the WEAK policy to follow Least Privilege. "
             "Return ONLY JSON with 'fixed_policy' and 'explanation'."
