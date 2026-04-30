@@ -92,8 +92,16 @@ The system operates as an iterative loop to ensure the highest quality of remedi
    ```
 
 ### Running The App
+   with one example:
    ```bash
    python main.py
    ```
-
+   with uploaded file to the same dir
+   ```bash
+   python main.py --file file_name
+   ```
+   with banch of json file with the same dir (will create final_evaluation_report.json file)
+   ```bash
+   python main.py --dir dir_location
+   ```
 ---
