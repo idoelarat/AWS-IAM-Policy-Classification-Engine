@@ -19,11 +19,11 @@
         "analysis": {
             "classification": "STRONG",
             "provider": "AWS",
-            "reason": "The policy specifies exact actions and resources without using wildcards or unrestricted actions, indicating good security practice."
+            "reason": "The policy adheres to PoLP by allowing only specific actions (s3:GetObject, s3:ListBucket) on specific resources without excessive permissions or wildcards."
         },
         "metadata": {
             "filename": "aws_strong_readonly.json.json",
-            "processing_time_sec": 2.33
+            "processing_time_sec": 2.26
         }
     },
     {
@@ -40,7 +40,7 @@
         "analysis": {
             "classification": "WEAK",
             "provider": "AWS",
-            "reason": "The policy allows all actions ('*') on all S3 resources ('*'), which indicates excessive permissions."
+            "reason": "The policy grants 's3:*' permissions on all resources without any conditions. This violates the Principle of Least Privilege by allowing excessive actions and exposing resources indiscriminately."
         },
         "remediation": {
             "fixed_policy": {
@@ -49,22 +49,35 @@
                     {
                         "Effect": "Allow",
                         "Action": [
-                            "s3:PutObject",
-                            "s3:GetObject",
                             "s3:ListBucket"
                         ],
-                        "Resource": [
-                            "arn:aws:s3:::example-bucket",
-                            "arn:aws:s3:::example-bucket/*"
-                        ]
+                        "Resource": "arn:aws:s3:::example-bucket",
+                        "Condition": {
+                            "IpAddress": {
+                                "aws:SourceIp": "192.0.2.0/24"
+                            }
+                        }
+                    },
+                    {
+                        "Effect": "Allow",
+                        "Action": [
+                            "s3:GetObject",
+                            "s3:PutObject"
+                        ],
+                        "Resource": "arn:aws:s3:::example-bucket/*",
+                        "Condition": {
+                            "IpAddress": {
+                                "aws:SourceIp": "192.0.2.0/24"
+                            }
+                        }
                     }
                 ]
             },
-            "explanation": "The fixed policy follows the principle of least privilege by specifying only the necessary actions: 's3:PutObject' for uploading, 's3:GetObject' for downloading, and 's3:ListBucket' for listing the objects in the bucket. The resources are restricted to a specific bucket, 'example-bucket', rather than allowing access to all S3 resources."
+            "explanation": "This revised policy ensures least privilege by restricting the permissions to only necessary S3 actions. 's3:ListBucket' is limited to the bucket itself, and 's3:GetObject' and 's3:PutObject' are limited to objects within the specified bucket. Access is further restricted by an IP address condition, limiting actions to a specific IP range, thereby providing additional security by preventing unauthorized access from unknown IPs."
         },
         "metadata": {
             "filename": "aws_weak_s3.json",
-            "processing_time_sec": 3.96
+            "processing_time_sec": 6.71
         }
     },
     {
@@ -88,13 +101,36 @@
             }
         },
         "analysis": {
-            "classification": "STRONG",
-            "provider": "GCP",
-            "reason": "The use of custom roles indicates a tailored permission model. However, the presence of wildcard permissions can be concerning, but since it does not specify the use of Primitive Roles or broad member access like 'allUsers', the configuration is classified as STRONG."
+            "classification": "WEAK",
+            "provider": "AZURE",
+            "reason": "The policy has 'assignableScopes' set to root '/' and uses wildcard '*' in 'actions', granting excessive permissions that allow for potential lateral movement and lack granular scope control."
+        },
+        "remediation": {
+            "fixed_policy": {
+                "properties": {
+                    "roleName": "Custom Limited Admin",
+                    "description": "Reduced permissions for security",
+                    "assignableScopes": [
+                        "/subscriptions/your-subscription-id"
+                    ],
+                    "permissions": [
+                        {
+                            "actions": [
+                                "Microsoft.Storage/storageAccounts/read",
+                                "Microsoft.Compute/virtualMachines/read"
+                            ],
+                            "notActions": [],
+                            "dataActions": [],
+                            "notDataActions": []
+                        }
+                    ]
+                }
+            },
+            "explanation": "The assignableScopes have been restricted to a specific subscription rather than the root to prevent the role from being used across all resources indiscriminately. The 'actions' field has been updated to specify only the necessary permissions required for the role. This ensures adherence to the principle of least privilege, reducing the risk of lateral movement and unauthorized access in the environment."
         },
         "metadata": {
             "filename": "azure_weak_rbac.json",
-            "processing_time_sec": 2.29
+            "processing_time_sec": 7.01
         }
     },
     {
@@ -111,11 +147,11 @@
         "analysis": {
             "classification": "STRONG",
             "provider": "GCP",
-            "reason": "The policy uses a predefined role (roles/storage.objectViewer) granted to a specific service account, avoiding the use of primitive roles or broad access such as allUsers."
+            "reason": "The policy applies a narrow predefined role 'roles/storage.objectViewer' to a specific service account, which aligns with the principle of least privilege and does not increase blast radius unnecessarily."
         },
         "metadata": {
             "filename": "gcp_strong_storage.json",
-            "processing_time_sec": 1.14
+            "processing_time_sec": 2.39
         }
     },
     {
@@ -132,7 +168,7 @@
         "analysis": {
             "classification": "WEAK",
             "provider": "GCP",
-            "reason": "Using a primitive role (Owner) instead of predefined or custom roles."
+            "reason": "The policy includes the 'roles/owner' primitive role, which grants overly broad permissions and increases the blast radius beyond the specific job function. Such roles are highly discouraged for granular access control."
         },
         "remediation": {
             "fixed_policy": {
@@ -143,13 +179,13 @@
                             "user:temp-contractor@company.com"
                         ]
                     }
-                ],
-                "explanation": "The temp-contractor only needs read-only access, which is why we have replaced the 'owner' role with the 'viewer' role. This follows the principle of least privilege, ensuring the user has only the necessary permissions to perform their job without the excessive permissions granted by the 'owner' role."
-            }
+                ]
+            },
+            "explanation": "The primitive 'roles/owner' role grants comprehensive access, including full control over resources, which is unnecessary for the temporary contractor's job. To adhere to the principle of least privilege, the policy has been modified to assign the 'roles/viewer' role, which limits the contractor's access to view-only permissions, reducing the risk of unintended actions while maintaining necessary access for their tasks."
         },
         "metadata": {
             "filename": "gcp_weak_owner.json",
-            "processing_time_sec": 3.83
+            "processing_time_sec": 10.55
         }
     }
 ]
